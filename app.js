@@ -86,6 +86,27 @@ app.put('/api/nps/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/nps/:id', async (req, res) => {
+  const id = req.params.id;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query(
+      'DELETE FROM nps_score_tab WHERE id = ?',
+      [id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Score not found' });
+    }
+    res.json({ message: 'Score deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete score' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
