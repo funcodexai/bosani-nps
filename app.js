@@ -202,6 +202,25 @@ app.get('/api/nps', async (req, res) => {
   }
 });
 
+app.get('/api/nps/:account/latest', async (req, res) => {
+  const account = req.params.account;
+  const limit = parseInt(req.query.limit) || 5;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query(
+      'SELECT * FROM nps_score_tab WHERE instagram_account = ? ORDER BY id DESC LIMIT ?',
+      [account, limit]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch latest scores' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
