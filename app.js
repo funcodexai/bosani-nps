@@ -111,6 +111,44 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/nps/:account/summary', async (req, res) => {
+  const account = req.params.account;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query(
+      `SELECT 
+        COUNT(*) AS total_responses,
+        AVG(score) AS average_score,
+        SUM(CASE WHEN score >= 9 THEN 1 ELSE 0 END) AS promoters,
+        SUM(CASE WHEN score >= 7 AND score <= 8 THEN 1 ELSE 0 END) AS passives,
+        SUM(CASE WHEN score <= 6 THEN 1 ELSE 0 END) AS detractors
+      FROM nps_score_tab WHERE instagram_account = ?`,
+      [account]
+    );
+    const data = rows[0];
+    const total = Number(data.total_responses);
+    const npsScore = total > 0
+      ? ((Number(data.promoters) - Number(data.detractors)) / total * 100).toFixed(1)
+      : 0;
+
+    res.json({
+      instagram_account: account,
+      total_responses: total,
+      average_score: Number(Number(data.average_score).toFixed(1)),
+      promoters: Number(data.promoters),
+      passives: Number(data.passives),
+      detractors: Number(data.detractors),
+      nps_score: Number(npsScore)
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to get summary' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
