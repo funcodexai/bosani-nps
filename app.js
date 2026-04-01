@@ -149,6 +149,59 @@ app.get('/api/nps/:account/summary', async (req, res) => {
   }
 });
 
+app.get('/api/nps/:account/export', async (req, res) => {
+  const account = req.params.account;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query(
+      'SELECT * FROM nps_score_tab WHERE instagram_account = ? ORDER BY id DESC',
+      [account]
+    );
+    const header = 'id,instagram_account,score,feedback\n';
+    const csv = header + rows.map(r =>
+      `${r.id},"${r.instagram_account}",${r.score},"${(r.feedback || '').replace(/"/g, '""')}"`
+    ).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=nps_${account}.csv`);
+    res.send(csv);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to export data' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+app.get('/api/nps', async (req, res) => {
+  const { min_score, max_score } = req.query;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    let query = 'SELECT * FROM nps_score_tab WHERE 1=1';
+    const params = [];
+
+    if (min_score !== undefined) {
+      query += ' AND score >= ?';
+      params.push(Number(min_score));
+    }
+    if (max_score !== undefined) {
+      query += ' AND score <= ?';
+      params.push(Number(max_score));
+    }
+    query += ' ORDER BY id DESC';
+
+    const rows = await conn.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch scores' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
