@@ -1,7 +1,7 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const mariadb = require('mariadb');
-const cors = require('cors');
+import express from 'express';
+import bodyParser from 'body-parser';
+import * as mariadb from 'mariadb';
+import cors from 'cors';
 
 const app = express();
 app.use(cors());
