@@ -34,7 +34,7 @@ app.get('/api/nps/:account', async (req, res) => {
 });
 
 app.post('/api/nps', async (req, res) => {
-  const { instagram_account, score, feedback } = req.body;
+  const { instagram_account, score } = req.body;
 
   if (!instagram_account || score === undefined) {
     return res.status(400).json({ error: 'instagram_account and score are required' });
@@ -44,8 +44,8 @@ app.post('/api/nps', async (req, res) => {
   try {
     conn = await pool.getConnection();
     const result = await conn.query(
-      'INSERT INTO nps_score_tab (instagram_account, score, feedback) VALUES (?, ?, ?)',
-      [instagram_account, score, feedback || null]
+      'INSERT INTO nps_score_tab (instagram_account, score) VALUES (?, ?)',
+      [instagram_account, score]
     );
     res.status(201).json({
       message: 'Score created',
