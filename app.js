@@ -1,31 +1,8 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import * as mariadb from 'mariadb';
-import cors from 'cors';
 
 const app = express();
-
-// FE beda VM: FRONTEND_ORIGIN=http://IP_FRONTEND (koma = beberapa). Lab: CORS_REFLECT_ORIGIN=true
-const reflect =
-  process.env.CORS_REFLECT_ORIGIN === '1' ||
-  process.env.CORS_REFLECT_ORIGIN === 'true';
-// Default: VM frontend (GCP) + localhost untuk dev. Override: FRONTEND_ORIGIN=...
-const frontendOrigins = (
-  process.env.FRONTEND_ORIGIN ?? 'http://34.136.60.59,http://localhost:5173'
-)
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
-app.use(
-  cors(
-    reflect
-      ? { origin: true }
-      : {
-          origin:
-            frontendOrigins.length <= 1 ? frontendOrigins[0] ?? true : frontendOrigins
-        }
-  )
-);
 
 app.use(bodyParser.json());
 
