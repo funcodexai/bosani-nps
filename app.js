@@ -8,7 +8,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const pool = mariadb.createPool({
-  host: 'localhost',
+  host: '127.0.0.1',
   user: 'root',
   password: 'bosani',
   database: 'bosani_nps',
